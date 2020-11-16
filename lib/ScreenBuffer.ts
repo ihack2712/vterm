@@ -2,7 +2,7 @@
 import type { Rows, Row } from "./types.ts";
 import { EventEmitter } from "./deps.ts";
 import { RepositionError, ResizeError, ScreenBufferError } from "./errors.ts";
-import { Color, ColorMode } from "./eunms.ts";
+import { Color, ColorMode } from "./enums.ts";
 
 type _ = unknown | Promise<unknown>;
 

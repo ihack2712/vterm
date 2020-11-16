@@ -1,4 +1,4 @@
-import { ColorMode } from "./eunms.ts";
+import { ColorMode } from "./enums.ts";
 
 export type Cell = {
 	data: string;
