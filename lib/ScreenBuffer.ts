@@ -1,6 +1,6 @@
 // Imports
 import type { Rows, Row } from "./types.ts";
-import { EventEmitter } from "https://deno.land/x/eventemitter@1.2.3/mod.ts";
+import { EventEmitter } from "./deps.ts";
 import { RepositionError, ResizeError, ScreenBufferError } from "./errors.ts";
 import { Color, ColorMode } from "./eunms.ts";
 
