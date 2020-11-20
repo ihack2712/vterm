@@ -1,5 +1,5 @@
 // Imports
-import type { Rows, Row } from "./types.ts";
+import type { Rows, Row, Cell } from "./types.ts";
 import { EventEmitter } from "./deps.ts";
 import { RepositionError, ResizeError, ScreenBufferError } from "./errors.ts";
 import { Color, ColorMode } from "./enums.ts";
@@ -25,7 +25,7 @@ export class ScreenBuffer extends EventEmitter<{
 		},
 	): _;
 	// @todo Document event.
-	move(
+	reposition(
 		oldPosition: {
 			x: number;
 			y: number;
@@ -36,6 +36,20 @@ export class ScreenBuffer extends EventEmitter<{
 		},
 	): _;
 }> {
+
+	/**
+	 * Create an empty cell object.
+	 */
+	public static emptyCell(): Cell {
+		return {
+			data: " ",
+			state: 0,
+			backgroundColor: Color.Default,
+			foregroundColor: Color.Default,
+			backgroundColorMode: ColorMode.Bit4,
+			foregroundColorMode: ColorMode.Bit4
+		};
+	}
 
 	private _: Rows = [];
 	private _height: number;
@@ -95,8 +109,8 @@ export class ScreenBuffer extends EventEmitter<{
 				: { x: 0, y: 0 };
 		let { w, h } = typeof d === "number" && typeof e === "number"
 			? { w: d, h: e }
-			: typeof b === "number" && typeof c === "number"
-				? { w: b, h: c }
+			: typeof a === "number" && typeof b === "number"
+				? { w: a, h: b }
 				: clone !== undefined
 					? { w: clone.getWidth(), h: clone.getHeight() }
 					: { w: undefined, h: undefined };
@@ -111,18 +125,10 @@ export class ScreenBuffer extends EventEmitter<{
 		this._width = w;
 		this._height = h;
 		for (let cy = 0; cy < h; cy++) {
-			this._[cy] = [];
 			const row: Row = [];
-			for (let cx = 0; cx < w; cx++) {
-				row[cx] = {
-					data: " ",
-					state: 0,
-					backgroundColor: Color.Default,
-					foregroundColor: Color.Default,
-					backgroundColorMode: ColorMode.Bit4,
-					foregroundColorMode: ColorMode.Bit4
-				};
-			}
+			for (let cx = 0; cx < w; cx++)
+				row[cx] = ScreenBuffer.emptyCell();
+			this._[cy] = row;
 		}
 	}
 
@@ -172,8 +178,7 @@ export class ScreenBuffer extends EventEmitter<{
 	 * Set the width of this buffer.
 	 * @param width The new width.
 	 */
-	public setWidth(width: number): this {
-		width = Math.floor(width);
+	public setWidth(width?: number): this {
 		return this.setSize(width, this._height);
 	}
 
@@ -181,8 +186,7 @@ export class ScreenBuffer extends EventEmitter<{
 	 * Set the height of this buffer.
 	 * @param height The new height.
 	 */
-	public setHeight(height: number): this {
-		height = Math.floor(height);
+	public setHeight(height?: number): this {
 		return this.setSize(this._width, height);
 	}
 
@@ -191,27 +195,31 @@ export class ScreenBuffer extends EventEmitter<{
 	 * @param width The new width.
 	 * @param height The new height.
 	 */
-	public setSize(width: number, height: number): this {
-		width = Math.floor(width);
-		height = Math.floor(height);
+	public setSize(width?: number, height?: number): this {
+		width = Math.floor(width ?? this._width);
+		height = Math.floor(height ?? this._height);
 
 		if (this._height === height && this._width === width) return this;
 
-		if (width < 0) {
+		if (width < 0)
 			throw new ResizeError("Width is less than 0!");
-		}
-		if (height < 0) {
+		if (height < 0)
 			throw new ResizeError("Height is less than 0!");
-		}
 
-		// @todo 1.0 (IF   ) Check if the new height is less than the old height.
-		// @todo 1.1 (BLOCK) Remove rows that are no longer used.
-		// @todo 2.0 (IF   ) Check if the new width is less than the old width.
-		// @todo 2.1 (BLOCK) Go through each row and remove columns that are no longer used.
-		// @todo 2.2 (EL IF) Check if the new width is greater than the old width.
-		// @todo 2.3 (BLOCK) Go through each row and add empty cells.
-		// @todo 3.0 (IF   ) Check if the new height is greater than the old height.
-		// @todo 3.1 (BLOCK) Add new rows with empty cells.
+		if (height < this._height)
+			this._ = this._.slice(0, height);
+
+		if (width < this._width)
+			for (let y = 0; y < this._height; y++)
+				this._[y] = this._[y].slice(0, width);
+		else if (width > this._width)
+			for (let y = 0; y < this._height; y++)
+				for (let x = this._width; x < width; x++)
+					this._[y][x] = ScreenBuffer.emptyCell();
+		if (height > this._height)
+			for (let y = this._height; y < height; y++)
+				for (let x = 0; x < width; x++)
+					this._[y][x] = ScreenBuffer.emptyCell();
 
 		const oSize = this.getSize();
 
@@ -221,6 +229,49 @@ export class ScreenBuffer extends EventEmitter<{
 		const nSize = this.getSize();
 
 		this.emitSync("resize", oSize, nSize);
+
+		return this;
+	}
+
+
+	/**
+	 * Set the x location.
+	 * @param x The x location.
+	 */
+	public setX(x?: number): this {
+		return this.setPosition(x, this._y);
+	}
+
+	/**
+	 * Set the y location.
+	 * @param y The y location.
+	 */
+	public setY(y?: number): this {
+		return this.setPosition(this._x, y);
+	}
+
+	/**
+	 * Set the x and y locations.
+	 * @param x The x location.
+	 * @param y The y location.
+	 */
+	public setPosition(x?: number, y?: number): this {
+		x = Math.floor(x ?? this._x);
+		y = Math.floor(y ?? this._y);
+
+		if (x === this._x && this._y === y) return this;
+
+		if (x < 0)
+			throw new RepositionError("X is less than 0!");
+		if (y < 0)
+			throw new RepositionError("Y is less than 0!");
+
+		const oPos = this.getPosition();
+
+		this._x = x;
+		this._y = y;
+
+		this.emitSync("reposition", oPos, { x, y });
 
 		return this;
 	}
