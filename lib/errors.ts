@@ -9,3 +9,7 @@ export class ResizeError extends ScreenBufferError {
 export class RepositionError extends ScreenBufferError {
 	public name = "RepositionError";
 }
+
+export class ColorError extends ScreenBufferError {
+	public name = "ColorError";
+}
