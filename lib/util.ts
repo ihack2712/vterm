@@ -42,6 +42,8 @@ export function createGraphicMode(...modes: (number | number[])[]): number[] {
  *  0, or the color is invalid for the given mode.
  */
 export function validateColor(color: number, mode: ColorMode) {
+	if (color < 0)
+		throw new ColorError("Negative numbers are not accepted!");
 	if (mode === ColorMode.Bit4) {
 		if (Color[color] === undefined)
 			throw new ColorError("Invalid 4bit color!");
