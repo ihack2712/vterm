@@ -5,7 +5,7 @@ import { ColorError, RepositionError, ResizeError, ScreenBufferError } from "./e
 import { Color, ColorMode, ScreenBufferDifferenceKind } from "./enums.ts";
 import { validateColor } from "./util.ts";
 import { MAX_STATE } from "./constants.ts";
-import { fromObj } from "./state.ts";
+import { fromObj, fromState, getAlternateFont, isBold, isDim, isDoubleUnderline, isHide, isItalic, isReverse, isSlowBlink, isStrike, isUnderline, setAlternateFont, setBold, setDim, setDoubleUnderline, setHide, setItalic, setReverse, setSlowBlink, setStrike, setUnderline } from "./state.ts";
 
 type _ = unknown | Promise<unknown>;
 
@@ -571,6 +571,13 @@ export class ScreenBuffer extends EventEmitter<{
 	}
 
 	/**
+	 * Get the current cell state as an object.
+	 */
+	public getStateObject(): CellState {
+		return fromState(this._state);
+	}
+
+	/**
 	 * Set the current state.
 	 * @param state The new state.
 	 */
@@ -585,6 +592,154 @@ export class ScreenBuffer extends EventEmitter<{
 		return this;
 	}
 
+	/**
+	 * Get the current bold state.
+	 */
+	public getBoldState(): boolean {
+		return isBold(this._state);
+	}
 
+	/**
+	 * Get the current dim state.
+	 */
+	public getDimmedState(): boolean {
+		return isDim(this._state);
+	}
+
+	/**
+	 * Get the current italic state.
+	 */
+	public getItalicState(): boolean {
+		return isItalic(this._state);
+	}
+
+	/**
+	 * Get the current underline state.
+	 */
+	public getUnderlinedState(): boolean {
+		return isUnderline(this._state);
+	}
+
+	/**
+	 * Get the current double underline state.
+	 */
+	public getDoubleUnderlinedState(): boolean {
+		return isDoubleUnderline(this._state);
+	}
+
+	/**
+	 * Get the current slow blink state.
+	 */
+	public getBlinkingState(): boolean {
+		return isSlowBlink(this._state);
+	}
+
+	/**
+	 * Get the current reversed state.
+	 */
+	public getReversedState(): boolean {
+		return isReverse(this._state);
+	}
+
+	/**
+	 * Get the current hidden state.
+	 */
+	public getHiddenState(): boolean {
+		return isHide(this._state);
+	}
+
+	/**
+	 * Get the current strikethrough state.
+	 */
+	public getStrikethroughState(): boolean {
+		return isStrike(this._state);
+	}
+
+	/**
+	 * Get the current alternate font.
+	 */
+	public getAlternateFontState(): number {
+		return getAlternateFont(this._state);
+	}
+
+	/**
+	 * Set the current bold state.
+	 * @param state The new bold state.
+	 */
+	public setBoldState(state: boolean): number {
+		return setBold(this._state, state);
+	}
+
+	/**
+	 * Set the current dim state.
+	 * @param state The new dim state.
+	 */
+	public setDimmedState(state: boolean): number {
+		return setDim(this._state, state);
+	}
+
+	/**
+	 * Set the current italic state.
+	 * @param state The new italic state.
+	 */
+	public setItalicState(state: boolean): number {
+		return setItalic(this._state, state);
+	}
+
+	/**
+	 * Set the current underline state.
+	 * @param state The new underline state.
+	 */
+	public setUnderlinedState(state: boolean): number {
+		return setUnderline(this._state, state);
+	}
+
+	/**
+	 * Set the current double underline state.
+	 * @param state The new double underline state.
+	 */
+	public setDoubleUnderlinedState(state: boolean): number {
+		return setDoubleUnderline(this._state, state);
+	}
+
+	/**
+	 * Set the current slow blinking state.
+	 * @param state The new slow blinking state.
+	 */
+	public setBlinkingState(state: boolean): number {
+		return setSlowBlink(this._state, state);
+	}
+
+	/**
+	 * Set the current reversed state.
+	 * @param state The new reversed state.
+	 */
+	public setReversedState(state: boolean): number {
+		return setReverse(this._state, state);
+	}
+
+	/**
+	 * Set the current hidden state.
+	 * @param state The new hidden state.
+	 */
+	public setHiddenState(state: boolean): number {
+		return setHide(this._state, state);
+	}
+
+	/**
+	 * Set the current strikethrough state.
+	 * @param state The new strikethrough.
+	 */
+	public setStrikethroughState(state: boolean): number {
+		return setStrike(this._state, state);
+	}
+
+	/**
+	 * Set the alternate font state.
+	 * @param n The alternate font number.
+	 */
+	public setAlternateFontState(n: number): number {
+		return setAlternateFont(this._state, n);
+	}
 
 }
