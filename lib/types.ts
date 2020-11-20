@@ -64,3 +64,20 @@ export type ScreenBufferUpdate = [
 ];
 
 export type ScreenBufferUpdates = ScreenBufferUpdate[];
+
+export interface IWriter {
+	getForegroundColorMode(): ColorMode;
+	getBackgroundColorMode(): ColorMode;
+	getForegroundColor(): number;
+	getBackgroundColor(): number;
+	setForegroundColorMode(mode: ColorMode): this;
+	setBackgroundColorMode(mode: ColorMode): this;
+	setForegroundColor(color: number, mode?: ColorMode): this;
+	setBackgroundColor(color: number, mode?: ColorMode): this;
+	getCursorPos(): Location;
+	setCursorPos(x: number, y: number): this;
+	getCursorX(): number;
+	getCursorY(): number;
+	setCursorX(x: number): this;
+	setCursorY(y: number): this;
+}

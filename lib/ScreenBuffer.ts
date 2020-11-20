@@ -1,8 +1,9 @@
 // Imports
-import type { Rows, Row, Cell, Location, Size, ScreenBufferUpdates, ScreenBufferUpdate, ScreenBufferDifference } from "./types.ts";
+import type { Rows, Row, Cell, Location, Size, ScreenBufferUpdates, ScreenBufferUpdate, ScreenBufferDifference, IWriter } from "./types.ts";
 import { EventEmitter } from "./deps.ts";
-import { RepositionError, ResizeError, ScreenBufferError } from "./errors.ts";
+import { ColorError, RepositionError, ResizeError, ScreenBufferError } from "./errors.ts";
 import { Color, ColorMode, ScreenBufferDifferenceKind } from "./enums.ts";
+import { validateColor } from "./util.ts";
 
 type _ = unknown | Promise<unknown>;
 
@@ -35,7 +36,7 @@ export class ScreenBuffer extends EventEmitter<{
 		newPosition: Location,
 	): _;
 
-}> {
+}> implements IWriter {
 
 	/**
 	 * Create an empty cell object.
@@ -65,10 +66,21 @@ export class ScreenBuffer extends EventEmitter<{
 	}
 
 	private _: Rows = [];
+
 	private _height: number;
 	private _width: number;
+
 	private _x = 0;
 	private _y = 0;
+
+	private _fcm: ColorMode = ColorMode.Bit4;
+	private _fc: number = Color.Default;
+
+	private _bcm: ColorMode = ColorMode.Bit4;
+	private _bc: number = Color.Default;
+
+	private _cx = 0;
+	private _cy = 0;
 
 	/**
 	 * Generate a new empty screen buffer.
@@ -416,4 +428,135 @@ export class ScreenBuffer extends EventEmitter<{
 		}
 		return updates;
 	}
+
+	/**
+	 * Get the current foreground color mode.
+	 */
+	public getForegroundColorMode(): ColorMode {
+		return this._fcm;
+	}
+
+	/**
+	 * Get the current foreground color.
+	 */
+	public getForegroundColor(): number {
+		return this._fc;
+	}
+
+	/**
+	 * Get the current background color mode.
+	 */
+	public getBackgroundColorMode(): ColorMode {
+		return this._bcm;
+	}
+
+	/**
+	 * Get the current background color.
+	 */
+	public getBackgroundColor(): number {
+		return this._bc;
+	}
+
+	/**
+	 * Change the current foreground color mode.
+	 * @param mode The color mode to change to.
+	 */
+	public setForegroundColorMode(mode: ColorMode): this {
+		this._fcm = mode;
+		return this;
+	}
+
+	/**
+	 * Change the current foreground color.
+	 * @param color The color to change to.
+	 * @param mode Also change the color mode.
+	 * @throws A {@see ColorError} if the color number is less than
+	 *  0, or the color is invalid for the given mode.
+	 */
+	public setForegroundColor(color: number, mode?: ColorMode): this {
+		validateColor(color, mode ?? this._fcm);
+		if (mode !== undefined)
+			this.setForegroundColorMode(mode);
+		this._fc = color;
+		return this;
+	}
+
+	/**
+	 * Change the current background color mode.
+	 * @param mode The color mode to change to.
+	 */
+	public setBackgroundColorMode(mode: ColorMode): this {
+		this._fcm = mode;
+		return this;
+	}
+
+	/**
+	 * Change the current background color.
+	 * @param color The color to change to.
+	 * @param mode Also change the color mode.
+	 * @throws A {@see ColorError} if the color number is less than
+	 *  0, or the color is invalid for the given mode.
+	 */
+	public setBackgroundColor(color: number, mode?: ColorMode): this {
+		validateColor(color, mode ?? this._bcm);
+		if (mode !== undefined)
+			this.setBackgroundColorMode(mode);
+		this._bc = color;
+		return this;
+	}
+
+	/**
+	 * Get the current cursor position.
+	 */
+	public getCursorPos(): Location {
+		return { x: this._cx, y: this._cy };
+	}
+
+	/**
+	 * Get the cursor's current x position.
+	 */
+	public getCursorX(): number {
+		return this._cx;
+	}
+
+	/**
+	 * Get the cursor's current y position.
+	 */
+	public getCursorY(): number {
+		return this._cy;
+	}
+
+	/**
+	 * Set a new cursor position.
+	 * @param x The new x location.
+	 * @param y The new y location.
+	 */
+	public setCursorPos(x: number, y: number): this {
+		if (x < 0)
+			throw new ScreenBufferError("The x location is less than 0!");
+		if (y < 0)
+			throw new ScreenBufferError("The y location is less than 0!");
+		if (x > this._width)
+			throw new ScreenBufferError("The x location is greater than the writer's width!");
+		if (y > this._height)
+			throw new ScreenBufferError("The y location is greater than the writer's height!");
+		return this;
+	}
+
+	/**
+	 * Set a new x cursor location.
+	 * @param x The new x location.
+	 */
+	public setCursorX(x: number): this {
+		return this.setCursorPos(x, this._cy);
+	}
+
+	/**
+	 * Set a new y cursor location.
+	 * @param y The new y location.
+	 */
+	public setCursorY(y: number): this {
+		return this.setCursorPos(this._cx, y);
+	}
+
 }
