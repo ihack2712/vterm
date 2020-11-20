@@ -1,5 +1,5 @@
 // Imports
-import type { Rows, Row, Cell } from "./types.ts";
+import type { Rows, Row, Cell, Location, Size } from "./types.ts";
 import { EventEmitter } from "./deps.ts";
 import { RepositionError, ResizeError, ScreenBufferError } from "./errors.ts";
 import { Color, ColorMode } from "./enums.ts";
@@ -11,30 +11,30 @@ type _ = unknown | Promise<unknown>;
  * cursor movement.
  */
 export class ScreenBuffer extends EventEmitter<{
-	// @todo Document event.
-	data(): _;
-	// @todo Document event.
+
+	/**
+	 * Fired when the screen buffer is forced to add or drop columns.
+	 * @event resize
+	 * @property {Size} oldSize The old size.
+	 * @property {Size} newSize The new size.
+	 */
 	resize(
-		oldSize: {
-			width: number;
-			height: number;
-		},
-		newSize: {
-			width: number;
-			height: number;
-		},
+		oldSize: Size,
+		newSize: Size,
 	): _;
-	// @todo Document event.
+
+	/**
+	 * Fired when the x and y locations are changed and differs from
+	 * the old x and/or y locations.
+	 * @event reposition
+	 * @property {Location} oldPosition The old position.
+	 * @property {Location} newPosition The new position.
+	 */
 	reposition(
-		oldPosition: {
-			x: number;
-			y: number;
-		},
-		newPosition: {
-			x: number;
-			y: number;
-		},
+		oldPosition: Location,
+		newPosition: Location,
 	): _;
+
 }> {
 
 	/**
@@ -130,6 +130,8 @@ export class ScreenBuffer extends EventEmitter<{
 				row[cx] = ScreenBuffer.emptyCell();
 			this._[cy] = row;
 		}
+		this._x = x;
+		this._y = y;
 	}
 
 	/**
@@ -177,6 +179,8 @@ export class ScreenBuffer extends EventEmitter<{
 	/**
 	 * Set the width of this buffer.
 	 * @param width The new width.
+	 * @fires resize If the new width differs from the old width.
+	 * @throws A {@see ResizeError} if the new width is less than 0.
 	 */
 	public setWidth(width?: number): this {
 		return this.setSize(width, this._height);
@@ -185,6 +189,8 @@ export class ScreenBuffer extends EventEmitter<{
 	/**
 	 * Set the height of this buffer.
 	 * @param height The new height.
+	 * @fires resize If the new height differs from the old height.
+	 * @throws A {@see ResizeError} if the new height is less than 0.
 	 */
 	public setHeight(height?: number): this {
 		return this.setSize(this._width, height);
@@ -194,6 +200,10 @@ export class ScreenBuffer extends EventEmitter<{
 	 * Set the size of this buffer.
 	 * @param width The new width.
 	 * @param height The new height.
+	 * @fires resize If the new height or the new width differs from
+	 *  the old width and/or height.
+	 * @throws A {@see ResizeError} if the new height or width is
+	 *  less than 0.
 	 */
 	public setSize(width?: number, height?: number): this {
 		width = Math.floor(width ?? this._width);
@@ -237,6 +247,10 @@ export class ScreenBuffer extends EventEmitter<{
 	/**
 	 * Set the x location.
 	 * @param x The x location.
+	 * @fires reposition If the new x position differs from the old x
+	 *  position.
+	 * @throws A {@see RepositionError} if the x position is less
+	 *  than 0.
 	 */
 	public setX(x?: number): this {
 		return this.setPosition(x, this._y);
@@ -245,6 +259,10 @@ export class ScreenBuffer extends EventEmitter<{
 	/**
 	 * Set the y location.
 	 * @param y The y location.
+	 * @fires reposition If the new y location differs from the old y
+	 *  position.
+	 * @throws A {@see RepositionError} if the new y position is less
+	 *  than 0.
 	 */
 	public setY(y?: number): this {
 		return this.setPosition(this._x, y);
@@ -254,6 +272,10 @@ export class ScreenBuffer extends EventEmitter<{
 	 * Set the x and y locations.
 	 * @param x The x location.
 	 * @param y The y location.
+	 * @fires reposition If the new x and/or the new y positions
+	 *  differ from the old x and/or y positions.
+	 * @throws A {@see RepositionError} if the new x and/or y
+	 *  positions is less than 0.
 	 */
 	public setPosition(x?: number, y?: number): this {
 		x = Math.floor(x ?? this._x);
