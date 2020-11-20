@@ -15,3 +15,10 @@ export enum Color {
 	White,
 	Default = 9
 }
+
+export enum ScreenBufferDifferenceKind {
+	State,
+	Data,
+	Foreground,
+	Background
+}

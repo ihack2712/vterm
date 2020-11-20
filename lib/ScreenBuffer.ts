@@ -1,8 +1,8 @@
 // Imports
-import type { Rows, Row, Cell, Location, Size } from "./types.ts";
+import type { Rows, Row, Cell, Location, Size, ScreenBufferUpdates, ScreenBufferUpdate, ScreenBufferDifference } from "./types.ts";
 import { EventEmitter } from "./deps.ts";
 import { RepositionError, ResizeError, ScreenBufferError } from "./errors.ts";
-import { Color, ColorMode } from "./enums.ts";
+import { Color, ColorMode, ScreenBufferDifferenceKind } from "./enums.ts";
 
 type _ = unknown | Promise<unknown>;
 
@@ -49,6 +49,19 @@ export class ScreenBuffer extends EventEmitter<{
 			backgroundColorMode: ColorMode.Bit4,
 			foregroundColorMode: ColorMode.Bit4
 		};
+	}
+
+	/**
+	 * Add a difference to an update array.
+	 * @param x The x location of the updated cell.
+	 * @param y The y location of the updated cell.
+	 * @param diff The difference to add to the update.
+	 * @param update The update.
+	 */
+	public static addDifferenceToUpdate(x: number, y: number, diff: ScreenBufferDifference, update?: ScreenBufferUpdate): ScreenBufferUpdate {
+		if (!update) return [x, y, [diff]] as ScreenBufferUpdate;
+		update[2].push(diff);
+		return update;
 	}
 
 	private _: Rows = [];
@@ -296,5 +309,111 @@ export class ScreenBuffer extends EventEmitter<{
 		this.emitSync("reposition", oPos, { x, y });
 
 		return this;
+	}
+
+	/**
+	 * Get the differences between two screen buffers.
+	 * @param buffer The screen buffer to match against.
+	 * @throws A {@see ScreenBufferError} If the opponent buffer and
+	 *  this buffer doesn't share the same width, height, x and y
+	 *  properties.
+	 */
+	public getUpdates(buffer: ScreenBuffer): ScreenBufferUpdates {
+		// Error checking.
+		if (this.getWidth() !== buffer.getWidth())
+			throw new ScreenBufferError("Buffers doesn't share the same width!");
+		if (this.getHeight() !== buffer.getHeight())
+			throw new ScreenBufferError("Buffers doesn't share the same height!");
+		if (this.getX() !== buffer.getX())
+			throw new ScreenBufferError("Buffers doesn't share the same x position!");
+		if (this.getY() !== buffer.getY())
+			throw new ScreenBufferError("Buffers doesn't share the same y position!");
+		// The boundaries.
+		const { width, height } = this.getSize();
+		// The updates to return.
+		const updates: ScreenBufferUpdates = [];
+		// An update of the last following differences.
+		let update: ScreenBufferUpdate | undefined = undefined;
+		// Go through each row of both this buffer and the opponent
+		// buffer.
+		for (let y = 0; y < height; y++) {
+			// Get the current row of this buffer.
+			const bRow = this._[y]; // bottom row
+			// Get the current row of the opponent buffer.
+			const uRow = buffer._[y]; // upper row
+			// Go through each column of the current row of both this
+			// buffer and the opponent buffer.
+			for (let x = 0; x < width; x++) {
+				// Get the current column of this row.
+				const bCell = bRow[x]; // bottom cell
+				// Get the current column of the opponent row.
+				const uCell = uRow[x]; // upper cell
+				// Used to check if cells has differences.
+				let hasDifference = false;
+				// Check if the cells have different background colors/modes.
+				if (bCell.backgroundColorMode !== uCell.backgroundColorMode || bCell.backgroundColor !== uCell.backgroundColor) {
+					update = ScreenBuffer.addDifferenceToUpdate(
+						x, y,
+						[
+							ScreenBufferDifferenceKind.Background,
+							{ kind: bCell.backgroundColorMode, color: bCell.backgroundColor },
+							{ kind: uCell.backgroundColorMode, color: uCell.backgroundColor }
+						], update
+					);
+					hasDifference = true;
+				}
+				// Check if the cells have different foreground colors/modes.
+				if (bCell.foregroundColorMode !== uCell.foregroundColorMode || bCell.backgroundColor !== uCell.backgroundColor) {
+					update = ScreenBuffer.addDifferenceToUpdate(
+						x, y,
+						[
+							ScreenBufferDifferenceKind.Background,
+							{ kind: bCell.foregroundColorMode, color: bCell.foregroundColor },
+							{ kind: uCell.foregroundColorMode, color: uCell.foregroundColor }
+						], update
+					);
+					hasDifference = true;
+				}
+				// Check if the cells have different states.
+				if (bCell.state !== uCell.state) {
+					update = ScreenBuffer.addDifferenceToUpdate(
+						x, y,
+						[
+							ScreenBufferDifferenceKind.State,
+							bCell.state,
+							uCell.state
+						], update
+					);
+					hasDifference = true;
+				}
+				// Check if the cells have different characters/data
+				// strings.
+				if (bCell.data !== uCell.data) {
+					update = ScreenBuffer.addDifferenceToUpdate(
+						x, y,
+						[
+							ScreenBufferDifferenceKind.Data,
+							bCell.data,
+							uCell.data,
+						]
+					);
+					hasDifference = true;
+				}
+
+				// Check if there are differences between the cells
+				if (!hasDifference) {
+					updates.push(update!);
+					update = undefined;
+				}
+			}
+
+			// Check if there is an update to add to the updates
+			// array before purging the cached update.
+			if (update !== undefined) {
+				updates.push(update);
+				update = undefined;
+			}
+		}
+		return updates;
 	}
 }
