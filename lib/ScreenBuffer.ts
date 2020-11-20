@@ -1,9 +1,11 @@
 // Imports
-import type { Rows, Row, Cell, Location, Size, ScreenBufferUpdates, ScreenBufferUpdate, ScreenBufferDifference, IWriter } from "./types.ts";
+import type { Rows, Row, Cell, Location, Size, ScreenBufferUpdates, ScreenBufferUpdate, ScreenBufferDifference, IWriter, CellState } from "./types.ts";
 import { EventEmitter } from "./deps.ts";
 import { ColorError, RepositionError, ResizeError, ScreenBufferError } from "./errors.ts";
 import { Color, ColorMode, ScreenBufferDifferenceKind } from "./enums.ts";
 import { validateColor } from "./util.ts";
+import { MAX_STATE } from "./constants.ts";
+import { fromObj } from "./state.ts";
 
 type _ = unknown | Promise<unknown>;
 
@@ -81,6 +83,8 @@ export class ScreenBuffer extends EventEmitter<{
 
 	private _cx = 0;
 	private _cy = 0;
+
+	private _state = 0;
 
 	/**
 	 * Generate a new empty screen buffer.
@@ -558,5 +562,29 @@ export class ScreenBuffer extends EventEmitter<{
 	public setCursorY(y: number): this {
 		return this.setCursorPos(this._cx, y);
 	}
+
+	/**
+	 * Get the current state.
+	 */
+	public getState(): number {
+		return this._state;
+	}
+
+	/**
+	 * Set the current state.
+	 * @param state The new state.
+	 */
+	public setState(state: number | Partial<CellState>): this {
+		if (typeof state !== "number")
+			state = fromObj(state);
+		if (state < 0)
+			throw new ScreenBufferError("State is less than 0!");
+		else if (state > MAX_STATE)
+			throw new ScreenBufferError("State is out of bounds!");
+		this._state = state;
+		return this;
+	}
+
+
 
 }

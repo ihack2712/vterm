@@ -9,6 +9,8 @@ export const S_STRIKETHROUGH /*    */ = 0b0000000010000000;
 export const S_ALT_FONT /*         */ = 0b0000111100000000;
 export const S_DOUBLE_UNDERLINE /* */ = 0b0001000000000000;
 
+export const MAX_STATE /*          */ = 0b0001100111111111;
+
 export const ALT_FONT_POS = 8;
 
 export const ESC = 0x1B; // \x1b - Escape Character

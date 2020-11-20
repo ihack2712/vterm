@@ -80,4 +80,6 @@ export interface IWriter {
 	getCursorY(): number;
 	setCursorX(x: number): this;
 	setCursorY(y: number): this;
+	getState(): number;
+	setState(n: number): this;
 }
