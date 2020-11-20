@@ -3,12 +3,13 @@ export const S_DIM  /*             */ = 0b0000000000000010;
 export const S_ITALIC /*           */ = 0b0000000000000100;
 export const S_UNDERLINE /*        */ = 0b0000000000001000;
 export const S_SLOW_BLINK /*       */ = 0b0000000000010000;
-export const S_RAPID_BLINK /*      */ = 0b0000000000100000;
-export const S_REVERSE /*          */ = 0b0000000001000000;
-export const S_HIDE /*             */ = 0b0000000010000000;
-export const S_STRIKETHROUGH /*    */ = 0b0000000100000000;
-export const S_ALT_FONT /*         */ = 0b0001111000000000;
-export const S_DOUBLE_UNDERLINE /* */ = 0b0010000000000000;
+export const S_REVERSE /*          */ = 0b0000000000100000;
+export const S_HIDE /*             */ = 0b0000000001000000;
+export const S_STRIKETHROUGH /*    */ = 0b0000000010000000;
+export const S_ALT_FONT /*         */ = 0b0000111100000000;
+export const S_DOUBLE_UNDERLINE /* */ = 0b0001000000000000;
+
+export const ALT_FONT_POS = 8;
 
 export const ESC = 0x1B; // \x1b - Escape Character
 export const DEL = 0x3B; // ; - Delimeter

@@ -1,4 +1,5 @@
 // Imports
+import type { Cell, CellState } from "./types.ts";
 import {
 	S_ALT_FONT,
 	S_BOLD,
@@ -6,11 +7,11 @@ import {
 	S_DOUBLE_UNDERLINE,
 	S_HIDE,
 	S_ITALIC,
-	S_RAPID_BLINK,
 	S_REVERSE,
 	S_SLOW_BLINK,
 	S_STRIKETHROUGH,
 	S_UNDERLINE,
+	ALT_FONT_POS
 } from "./constants.ts";
 
 /**
@@ -125,27 +126,7 @@ export function isSlowBlink(state: number): boolean {
  */
 export function setSlowBlink(state: number, enable = true): number {
 	if (!enable) return isSlowBlink(state) ? state - S_SLOW_BLINK : state;
-	if (isRapidBlink(state)) state = setRapidBlink(state, false);
 	return state | S_SLOW_BLINK;
-}
-
-/**
- * Check whether or not a state has rapid blink.
- * @param state The original state bit field.
- */
-export function isRapidBlink(state: number): boolean {
-	return (state & S_RAPID_BLINK) === S_RAPID_BLINK;
-}
-
-/**
- * Set the rapid blink state.
- * @param state The original state bit field.
- * @param enable The rapid blink state.
- */
-export function setRapidBlink(state: number, enable = true): number {
-	if (!enable) return isRapidBlink(state) ? state - S_RAPID_BLINK : state;
-	if (isSlowBlink(state)) state = setSlowBlink(state, false);
-	return state | S_RAPID_BLINK;
 }
 
 /**
@@ -202,10 +183,57 @@ export function setStrike(state: number, enable = true): number {
 	return state | S_STRIKETHROUGH;
 }
 
+/**
+ * Get the *n* font of a state.
+ * @param state The original state bit field.
+ */
 export function getAlternateFont(state: number): number {
 	return (state & S_ALT_FONT) >> 9;
 }
 
+/**
+ * Set the *n* font of the state.
+ * @param state The original state bit field.
+ * @param n The alternate font *n*.
+ */
 export function setAlternateFont(state: number, n = 0): number {
-	return (state - (state & S_ALT_FONT)) | (n % 9);
+	return (state - (state & S_ALT_FONT)) | (n % 9) << ALT_FONT_POS;
+}
+
+/**
+ * Get an object representative of a state.
+ * @param state The original state bit field.
+ */
+export function fromState(state: number): CellState {
+	return {
+		altFont: getAlternateFont(state),
+		bold: isBold(state),
+		dim: isDim(state),
+		doubleUnderline: isDoubleUnderline(state),
+		hide: isHide(state),
+		italic: isItalic(state),
+		reverse: isReverse(state),
+		slowBlink: isSlowBlink(state),
+		strikeThrough: isStrike(state),
+		underline: isUnderline(state)
+	};
+}
+
+/**
+ * Get the state bit field from an object representative.
+ * @param r The object representative.
+ */
+export function fromObj(r: Partial<CellState>): number {
+	let i: number = 0;
+	i = setAlternateFont(i, r.altFont ?? 0);
+	i = setBold(i, r.bold ?? false);
+	i = setDim(i, r.dim ?? false);
+	i = setDoubleUnderline(i, r.doubleUnderline ?? false);
+	i = setHide(i, r.hide ?? false);
+	i = setItalic(i, r.italic ?? false);
+	i = setReverse(i, r.reverse ?? false);
+	i = setSlowBlink(i, r.slowBlink ?? false);
+	i = setStrike(i, r.strikeThrough ?? false);
+	i = setUnderline(i, r.underline ?? false);
+	return i;
 }
