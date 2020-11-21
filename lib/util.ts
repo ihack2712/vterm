@@ -55,3 +55,18 @@ export function validateColor(color: number, mode: ColorMode) {
 			throw new ColorError("Invalid 24bit color!");
 	}
 }
+
+/**
+ * See {@link https://en.wikipedia.org/wiki/ANSI_escape_code#CSI_sequences ANSI escape code}.
+ */
+// deno-lint-ignore no-control-regex
+const escSequencesRegex = /(\x1b(([\]\\\^\_XNOP])|(c)|(SP[FG])|(\[(?!((\d+?[ABCDEFGJKST])|([0-9;]*m)|(\d+?\;?\d+?[Hf])|([45]i)|(6n)|([su])|(\?(25|1049|2004)[hl]))))|\[((\d+?[ABCDEFGJKST])|([0-9;]*m)|(\d+?\;?\d+?[Hf])|([45]i)|(6n)|([su])|(\?(25|1049|2004)[hl])))?)/g;
+
+/**
+ * Remove escape sequence characters from a string.
+ * @param str The string to remove the escape sequence characters
+ *  from.
+ */
+export function stripEscapeSequences(str: string): string {
+	return str.replace(escSequencesRegex, "");
+}

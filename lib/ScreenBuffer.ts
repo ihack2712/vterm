@@ -1,9 +1,9 @@
 // Imports
 import type { Rows, Row, Cell, Location, Size, ScreenBufferUpdates, ScreenBufferUpdate, ScreenBufferDifference, IWriter, CellState } from "./types.ts";
 import { EventEmitter } from "./deps.ts";
-import { ColorError, RepositionError, ResizeError, ScreenBufferError } from "./errors.ts";
+import { RepositionError, ResizeError, ScreenBufferError } from "./errors.ts";
 import { Color, ColorMode, ScreenBufferDifferenceKind } from "./enums.ts";
-import { validateColor } from "./util.ts";
+import { stripEscapeSequences, validateColor } from "./util.ts";
 import { MAX_STATE } from "./constants.ts";
 import { fromObj, fromState, getAlternateFont, isBold, isDim, isDoubleUnderline, isHide, isItalic, isReverse, isSlowBlink, isStrike, isUnderline, setAlternateFont, setBold, setDim, setDoubleUnderline, setHide, setItalic, setReverse, setSlowBlink, setStrike, setUnderline } from "./state.ts";
 
@@ -740,6 +740,88 @@ export class ScreenBuffer extends EventEmitter<{
 	 */
 	public setAlternateFontState(n: number): number {
 		return setAlternateFont(this._state, n);
+	}
+
+	private _shiftRow() {
+		this._.shift();
+		const row: Row = [];
+		for (let x = 0; x < this._width; x++)
+			row[x] = ScreenBuffer.emptyCell();
+		this._.push(row);
+	}
+
+	/**
+	 * Write data onto the screen buffer.
+	 * @param data The data to write.
+	 */
+	public writeRaw(data: string): this {
+		data = stripEscapeSequences(data).replace(/\t/g, "    ");
+		const row = this._[this._cy];
+		for (const char of data) {
+			if (char === "\r") {
+				this._cx = 0;
+				continue;
+			} else if (char === "\n") {
+				this._cx = 0;
+				this._cy++;
+				if (this._cy === this._height)
+					this._shiftRow();
+				continue;
+			}
+			row[this._cx++] = {
+				data: char,
+				state: this._state,
+				backgroundColor: this._bc,
+				backgroundColorMode: this._bcm,
+				foregroundColor: this._fc,
+				foregroundColorMode: this._fcm
+			};
+			if (this._cx === this._width) {
+				this._cx = 0;
+				this._cy++;
+			}
+			if (this._cy === this._height)
+				this._shiftRow();
+
+		}
+		if (this._cx > this._width) this._cx = this._width - 1;
+		return this;
+	}
+
+	/**
+	 * Clear the current line.
+	 */
+	public clearLine(): this {
+		const row = this._[this._cy];
+		for (let x = 0; x < this._width; x++)
+			row[x] = {
+				data: " ",
+				state: this._state,
+				backgroundColor: this._bc,
+				backgroundColorMode: this._bcm,
+				foregroundColor: this._fc,
+				foregroundColorMode: this._fcm
+			};
+		return this;
+	}
+
+	/**
+	 * Clear the screen buffer.
+	 */
+	public clear(): this {
+		for (let y = 0; y < this._height; y++) {
+			const row = this._[this._cy];
+			for (let x = 0; x < this._width; x++)
+				row[x] = {
+					data: " ",
+					state: this._state,
+					backgroundColor: this._bc,
+					backgroundColorMode: this._bcm,
+					foregroundColor: this._fc,
+					foregroundColorMode: this._fcm
+				};
+		}
+		return this;
 	}
 
 }

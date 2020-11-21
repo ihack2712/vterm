@@ -82,4 +82,27 @@ export interface IWriter {
 	setCursorY(y: number): this;
 	getState(): number;
 	setState(n: number): this;
+	getBoldState(): boolean;
+	getDimmedState(): boolean;
+	getItalicState(): boolean;
+	getUnderlinedState(): boolean;
+	getDoubleUnderlinedState(): boolean;
+	getBlinkingState(): boolean;
+	getReversedState(): boolean;
+	getHiddenState(): boolean;
+	getStrikethroughState(): boolean;
+	getAlternateFontState(): number;
+	setBoldState(state: boolean): number;
+	setDimmedState(state: boolean): number;
+	setItalicState(state: boolean): number;
+	setUnderlinedState(state: boolean): number;
+	setDoubleUnderlinedState(state: boolean): number;
+	setBlinkingState(state: boolean): number;
+	setReversedState(state: boolean): number;
+	setHiddenState(state: boolean): number;
+	setStrikethroughState(state: boolean): number;
+	setAlternateFontState(n: number): number;
+	writeRaw(data: string): this;
+	clearLine(): this;
+	clear(): this;
 }
