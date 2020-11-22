@@ -1,5 +1,5 @@
 export const S_BOLD /*             */ = 0b0000000000000001;
-export const S_DIM  /*             */ = 0b0000000000000010;
+export const S_DIM /*              */ = 0b0000000000000010;
 export const S_ITALIC /*           */ = 0b0000000000000100;
 export const S_UNDERLINE /*        */ = 0b0000000000001000;
 export const S_SLOW_BLINK /*       */ = 0b0000000000010000;
@@ -26,4 +26,16 @@ export const GM_BOLD = 0x01;
 export const GM_DIM = 0x02;
 export const GM_ITALIC = 0x03;
 export const GM_UNDERLINE = 0x04;
+export const GM_DBLUNDERLINE_OFF_BOLD = 0x15;
 export const GM_SLOW_BLINK = 0x05;
+export const GM_REVERSE = 0x07;
+export const GM_HIDE = 0x08;
+export const GM_STRIKE = 0x09;
+
+export const GO_BOLD_DIM = 0x16;
+export const GO_ITALIC = 0x17;
+export const GO_UNDERLINE = 0x18;
+export const GO_BLINK = 0x19;
+export const GO_REVERSE = 0x1B;
+export const GO_HIDE = 0x1C;
+export const GO_STRIKE = 0x1D;
