@@ -1,6 +1,6 @@
 // Imports
-import type { Rows, Row, Cell, Location, Size, ScreenBufferUpdates, ScreenBufferUpdate, ScreenBufferDifference, IWriter, CellState } from "./types.ts";
-import { EventEmitter } from "./deps.ts";
+import type { Rows, Row, Cell, Location, Size, ScreenBufferUpdates, ScreenBufferUpdate, ScreenBufferDifference, IWriter, CellState, ColorProp } from "./types.ts";
+import { Event } from "./Event.ts";
 import { RepositionError, ResizeError, ScreenBufferError } from "./errors.ts";
 import { Color, ColorMode, ScreenBufferDifferenceKind } from "./enums.ts";
 import { stripEscapeSequences, validateColor } from "./util.ts";
@@ -13,32 +13,7 @@ type _ = unknown | Promise<unknown>;
  * A screen buffer made for efficient difference rendering with smart
  * cursor movement.
  */
-export class ScreenBuffer extends EventEmitter<{
-
-	/**
-	 * Fired when the screen buffer is forced to add or drop columns.
-	 * @event resize
-	 * @property {Size} oldSize The old size.
-	 * @property {Size} newSize The new size.
-	 */
-	resize(
-		oldSize: Size,
-		newSize: Size,
-	): _;
-
-	/**
-	 * Fired when the x and y locations are changed and differs from
-	 * the old x and/or y locations.
-	 * @event reposition
-	 * @property {Location} oldPosition The old position.
-	 * @property {Location} newPosition The new position.
-	 */
-	reposition(
-		oldPosition: Location,
-		newPosition: Location,
-	): _;
-
-}> implements IWriter {
+export class ScreenBuffer implements IWriter {
 
 	/**
 	 * Create an empty cell object.
@@ -86,6 +61,15 @@ export class ScreenBuffer extends EventEmitter<{
 
 	private _state = 0;
 
+	/** A resize event. */
+	public readonly onresize = new Event<[Size, Size]>();
+
+	/** A reposition event. */
+	public readonly onreposition = new Event<[Location, Location]>();
+
+	/** A render request event. */
+	public readonly onrender = new Event();
+
 	/**
 	 * Generate a new empty screen buffer.
 	 * @param columns The amount of empty columns to create.
@@ -130,7 +114,6 @@ export class ScreenBuffer extends EventEmitter<{
 		d?: number,
 		e?: number,
 	) {
-		super();
 		const clone = a instanceof ScreenBuffer ? a : undefined;
 		const { x, y } =
 			typeof b === "number" && typeof c === "number" && typeof d === "number" && typeof e === "number"
@@ -161,6 +144,11 @@ export class ScreenBuffer extends EventEmitter<{
 		}
 		this._x = x;
 		this._y = y;
+	}
+
+	public render(): this {
+		this.onrender.dispatch();
+		return this;
 	}
 
 	/**
@@ -267,7 +255,7 @@ export class ScreenBuffer extends EventEmitter<{
 
 		const nSize = this.getSize();
 
-		this.emitSync("resize", oSize, nSize);
+		this.onresize.dispatch(oSize, nSize);
 
 		return this;
 	}
@@ -322,7 +310,7 @@ export class ScreenBuffer extends EventEmitter<{
 		this._x = x;
 		this._y = y;
 
-		this.emitSync("reposition", oPos, { x, y });
+		this.onreposition.dispatch(oPos, { x, y });
 
 		return this;
 	}
@@ -431,6 +419,42 @@ export class ScreenBuffer extends EventEmitter<{
 			}
 		}
 		return updates;
+	}
+
+	/**
+	 * Apply updates onto this screen buffer.
+	 * @param updates The updates to apply.
+	 */
+	public applyUpdates(updates: ScreenBufferUpdates): this {
+		let state: number = 0;
+		let fg: ColorProp = { kind: ColorMode.Bit4, color: Color.Default };
+		let bg: ColorProp = { kind: ColorMode.Bit4, color: Color.Default };
+		for (const [ax, ay, differences] of updates) {
+			let cx = ax;
+			const row = this._[ay];
+			for (const [kind, o, n] of differences) {
+				// deno-lint-ignore no-explicit-any
+				if (kind === ScreenBufferDifferenceKind.State) state = n as any;
+				// deno-lint-ignore no-explicit-any
+				else if (kind === ScreenBufferDifferenceKind.Background) bg = n as any;
+				// deno-lint-ignore no-explicit-any
+				else if (kind === ScreenBufferDifferenceKind.Foreground) fg = n as any;
+				else if (kind === ScreenBufferDifferenceKind.Data) {
+					if (cx > this._width) continue;
+					row[cx] = {
+						// deno-lint-ignore no-explicit-any
+						data: n as any,
+						state,
+						backgroundColor: bg.color,
+						backgroundColorMode: bg.kind,
+						foregroundColor: fg.color,
+						foregroundColorMode: fg.kind
+					};
+					cx++;
+				}
+			}
+		}
+		return this;
 	}
 
 	/**
