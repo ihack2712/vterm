@@ -14,7 +14,7 @@ export function encodeNumber(n: number): number[] {
 	while (n > 0) {
 		const m = n / 10;
 		n = Math.floor(m);
-		array.unshift(((m - n) * 10) + 30);
+		array.unshift(((m - n) * 10) + 48);
 	}
 	return array;
 }
