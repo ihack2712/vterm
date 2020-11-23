@@ -1,5 +1,5 @@
 // Imports
-import type { Cell, CellState } from "./types.ts";
+import type { CellState } from "./types.ts";
 import {
 	S_ALT_FONT,
 	S_BOLD,
