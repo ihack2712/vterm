@@ -224,7 +224,7 @@ export function fromState(state: number): CellState {
  * @param r The object representative.
  */
 export function fromObj(r: Partial<CellState>): number {
-	let i: number = 0;
+	let i = 0;
 	i = setAlternateFont(i, r.altFont ?? 0);
 	i = setBold(i, r.bold ?? false);
 	i = setDim(i, r.dim ?? false);

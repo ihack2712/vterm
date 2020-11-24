@@ -436,7 +436,7 @@ export class ScreenBuffer implements IWriter {
 	 * @param updates The updates to apply.
 	 */
 	public applyUpdates(updates: ScreenBufferUpdates): this {
-		let state: number = 0;
+		let state = 0;
 		let fg: ColorProp = { kind: ColorMode.Bit4, color: Color.Default };
 		let bg: ColorProp = { kind: ColorMode.Bit4, color: Color.Default };
 		for (const [ax, ay, differences] of updates) {
