@@ -37,7 +37,7 @@ export class ScreenBuffer implements IWriter {
 	 * @param update The update.
 	 */
 	public static addDifferenceToUpdate(x: number, y: number, diff: ScreenBufferDifference, update?: ScreenBufferUpdate): ScreenBufferUpdate {
-		if (!update) return [x, y, [diff]] as ScreenBufferUpdate;
+		if (!update) return [x, y, [diff]];
 		update[2].push(diff);
 		return update;
 	}
@@ -146,6 +146,16 @@ export class ScreenBuffer implements IWriter {
 		this._y = y;
 	}
 
+	/**
+	 * Return the rows array.
+	 */
+	public imAPro(): Rows {
+		return this._;
+	}
+
+	/**
+	 * Request for the screen buffer to be rendered.
+	 */
 	public render(): this {
 		this.onrender.dispatch();
 		return this;
@@ -392,7 +402,7 @@ export class ScreenBuffer implements IWriter {
 				}
 				// Check if the cells have different characters/data
 				// strings.
-				if (bCell.data !== uCell.data) {
+				if (bCell.data !== uCell.data || hasDifference) {
 					update = ScreenBuffer.addDifferenceToUpdate(
 						x, y,
 						[
@@ -405,7 +415,7 @@ export class ScreenBuffer implements IWriter {
 				}
 
 				// Check if there are differences between the cells
-				if (!hasDifference) {
+				if (hasDifference) {
 					updates.push(update!);
 					update = undefined;
 				}
@@ -568,6 +578,8 @@ export class ScreenBuffer implements IWriter {
 			throw new ScreenBufferError("The x location is greater than the writer's width!");
 		if (y > this._height)
 			throw new ScreenBufferError("The y location is greater than the writer's height!");
+		this._cx = x;
+		this._cy = y;
 		return this;
 	}
 
@@ -690,80 +702,90 @@ export class ScreenBuffer implements IWriter {
 	 * Set the current bold state.
 	 * @param state The new bold state.
 	 */
-	public setBoldState(state: boolean): number {
-		return setBold(this._state, state);
+	public setBoldState(state: boolean): this {
+		this._state = setBold(this._state, state);
+		return this;
 	}
 
 	/**
 	 * Set the current dim state.
 	 * @param state The new dim state.
 	 */
-	public setDimmedState(state: boolean): number {
-		return setDim(this._state, state);
+	public setDimmedState(state: boolean): this {
+		this._state = setDim(this._state, state);
+		return this;
 	}
 
 	/**
 	 * Set the current italic state.
 	 * @param state The new italic state.
 	 */
-	public setItalicState(state: boolean): number {
-		return setItalic(this._state, state);
+	public setItalicState(state: boolean): this {
+		this._state = setItalic(this._state, state);
+		return this;
 	}
 
 	/**
 	 * Set the current underline state.
 	 * @param state The new underline state.
 	 */
-	public setUnderlinedState(state: boolean): number {
-		return setUnderline(this._state, state);
+	public setUnderlinedState(state: boolean): this {
+		this._state = setUnderline(this._state, state);
+		return this;
 	}
 
 	/**
 	 * Set the current double underline state.
 	 * @param state The new double underline state.
 	 */
-	public setDoubleUnderlinedState(state: boolean): number {
-		return setDoubleUnderline(this._state, state);
+	public setDoubleUnderlinedState(state: boolean): this {
+		this._state = setDoubleUnderline(this._state, state);
+		return this;
 	}
 
 	/**
 	 * Set the current slow blinking state.
 	 * @param state The new slow blinking state.
 	 */
-	public setBlinkingState(state: boolean): number {
-		return setSlowBlink(this._state, state);
+	public setBlinkingState(state: boolean): this {
+		this._state = setSlowBlink(this._state, state);
+		return this;
 	}
 
 	/**
 	 * Set the current reversed state.
 	 * @param state The new reversed state.
 	 */
-	public setReversedState(state: boolean): number {
-		return setReverse(this._state, state);
+	public setReversedState(state: boolean): this {
+		this._state = setReverse(this._state, state);
+		return this;
 	}
 
 	/**
 	 * Set the current hidden state.
 	 * @param state The new hidden state.
 	 */
-	public setHiddenState(state: boolean): number {
-		return setHide(this._state, state);
+	public setHiddenState(state: boolean): this {
+		this._state = setHide(this._state, state);
+		return this;
 	}
 
 	/**
 	 * Set the current strikethrough state.
 	 * @param state The new strikethrough.
 	 */
-	public setStrikethroughState(state: boolean): number {
-		return setStrike(this._state, state);
+	public setStrikethroughState(state: boolean): this {
+		this._state = setStrike(this._state, state);
+		return this;
 	}
 
 	/**
 	 * Set the alternate font state.
 	 * @param n The alternate font number.
 	 */
-	public setAlternateFontState(n: number): number {
-		return setAlternateFont(this._state, n);
+	public setAlternateFontState(n: number): this {
+		this._state = setAlternateFont(this._state, n);
+		return this;
 	}
 
 	private _shiftRow() {
@@ -788,8 +810,10 @@ export class ScreenBuffer implements IWriter {
 			} else if (char === "\n") {
 				this._cx = 0;
 				this._cy++;
-				if (this._cy === this._height)
+				if (this._cy === this._height) {
 					this._shiftRow();
+					this._cy--;
+				}
 				continue;
 			}
 			row[this._cx++] = {
@@ -804,8 +828,10 @@ export class ScreenBuffer implements IWriter {
 				this._cx = 0;
 				this._cy++;
 			}
-			if (this._cy === this._height)
+			if (this._cy === this._height) {
 				this._shiftRow();
+				this._cy--;
+			}
 
 		}
 		if (this._cx > this._width) this._cx = this._width - 1;

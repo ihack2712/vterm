@@ -13,7 +13,15 @@ export enum Color {
 	Magenta,
 	Cyan,
 	White,
-	Default = 9
+	Default = 9,
+	BrightBlack = 60,
+	BrightRed = 61,
+	BrightGreen = 62,
+	BrightYellow = 63,
+	BrightBlue = 64,
+	BrightMagenta = 65,
+	BrightCyan = 66,
+	BrightWhite = 67,
 }
 
 export enum ScreenBufferDifferenceKind {
