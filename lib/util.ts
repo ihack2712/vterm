@@ -1,5 +1,4 @@
 // Imports
-import { CSI, DEL, PM } from "./constants.ts";
 import { Color, ColorMode } from "./enums.ts";
 import { ColorError } from "./errors.ts";
 
@@ -17,21 +16,6 @@ export function encodeNumber(n: number): number[] {
 		array.unshift(((m - n) * 10) + 48);
 	}
 	return array;
-}
-
-/**
- * Create a grapic modes byte array.
- * @param modes The graphic modes.
- */
-export function createGraphicMode(...modes: (number | number[])[]): number[] {
-	modes = modes.flat();
-	const arr = [...CSI];
-	for (const mode of modes) {
-		arr.push(...encodeNumber(mode as number));
-		arr.push(DEL);
-	}
-	arr.pop();
-	return [...arr, PM];
 }
 
 /**
@@ -54,6 +38,18 @@ export function validateColor(color: number, mode: ColorMode) {
 		if (color > 0xFFFFFF)
 			throw new ColorError("Invalid 24bit color!");
 	}
+}
+
+/**
+ * Turn a 4 bit color into a valid SGR parameter.
+ * @param color The color.
+ * @param isBackground Whether or not the color is a background.
+ */
+export function transform4BitColor(color: Color, isBackground = false): number {
+	if (typeof color === "string") color = Color[color] as unknown as number;
+	if (color === undefined)
+		throw new Error("Invalid 4bit color!");
+	return color + (isBackground ? 40 : 30);
 }
 
 /**
